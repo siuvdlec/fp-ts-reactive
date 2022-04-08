@@ -10,7 +10,7 @@
 
 ```ts
 import { from } from 'rxjs'
-import { observable } from 'fp-ts-rxjs/lib/Observable'
+import { observable } from 'fp-ts-rxjs/Observable'
 
 const fa = from([1, 2, 3])
 const fb = observable.chain(fa, a => from([a, a + 1]))
