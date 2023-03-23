@@ -4,6 +4,7 @@
 import type { Applicative4 } from 'fp-ts/Applicative'
 import type { Apply4 } from 'fp-ts/Apply'
 import type { Bifunctor4 } from 'fp-ts/Bifunctor'
+import type { Chain4 } from 'fp-ts/Chain'
 import * as E from 'fp-ts/Either'
 import type { Functor4 } from 'fp-ts/Functor'
 import type { Monad4 } from 'fp-ts/Monad'
@@ -370,6 +371,17 @@ export const Applicative: Applicative4<URI> = {
     map: map_,
     ap: ap_,
     of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Chain: Chain4<URI> = {
+    URI,
+    map: map_,
+    ap: ap_,
+    chain: chain_,
 }
 
 /**

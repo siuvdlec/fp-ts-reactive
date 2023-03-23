@@ -4,6 +4,7 @@
 import type { Applicative3 } from 'fp-ts/Applicative'
 import type { Apply3 } from 'fp-ts/Apply'
 import type { Bifunctor3 } from 'fp-ts/Bifunctor'
+import type { Chain3 } from 'fp-ts/Chain'
 import type { Either } from 'fp-ts/Either'
 import type { Functor3 } from 'fp-ts/Functor'
 import type { Monad3 } from 'fp-ts/Monad'
@@ -358,6 +359,17 @@ export const Applicative: Applicative3<URI> = {
     map: map_,
     ap: ap_,
     of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Chain: Chain3<URI> = {
+    URI,
+    map: map_,
+    ap: ap_,
+    chain: chain_,
 }
 
 /**

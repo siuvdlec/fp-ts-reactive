@@ -4,6 +4,7 @@
 import type { Alt1 } from 'fp-ts/Alt'
 import type { Applicative1 } from 'fp-ts/Applicative'
 import type { Apply1 } from 'fp-ts/Apply'
+import type { Chain1 } from 'fp-ts/Chain'
 import type { Functor1 } from 'fp-ts/Functor'
 import type { IO } from 'fp-ts/IO'
 import type { Monad1 } from 'fp-ts/Monad'
@@ -306,6 +307,17 @@ export const Applicative: Applicative1<URI> = {
     map: map_,
     ap: ap_,
     of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Chain: Chain1<URI> = {
+    URI,
+    map: map_,
+    ap: ap_,
+    chain: chain_,
 }
 
 /**

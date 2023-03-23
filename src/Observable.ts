@@ -5,6 +5,7 @@ import type { Alt1 } from 'fp-ts/Alt'
 import type { Alternative1 } from 'fp-ts/Alternative'
 import type { Applicative1 } from 'fp-ts/Applicative'
 import type { Apply1 } from 'fp-ts/Apply'
+import type { Chain1 } from 'fp-ts/Chain'
 import type { Compactable1, Separated } from 'fp-ts/Compactable'
 import * as E from 'fp-ts/Either'
 import type { Filterable1 } from 'fp-ts/Filterable'
@@ -301,6 +302,17 @@ export const Applicative: Applicative1<URI> = {
     map: map_,
     ap: ap_,
     of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Chain: Chain1<URI> = {
+    URI,
+    map: map_,
+    ap: ap_,
+    chain: chain_,
 }
 
 /**

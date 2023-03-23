@@ -5,6 +5,7 @@ import type { Alt2 } from 'fp-ts/Alt'
 import type { Applicative2 } from 'fp-ts/Applicative'
 import type { Apply2 } from 'fp-ts/Apply'
 import type { Bifunctor2 } from 'fp-ts/Bifunctor'
+import type { Chain2 } from 'fp-ts/Chain'
 import * as E from 'fp-ts/Either'
 import type { Functor2 } from 'fp-ts/Functor'
 import type { IO } from 'fp-ts/IO'
@@ -423,6 +424,17 @@ export const Applicative: Applicative2<URI> = {
     map: map_,
     ap: ap_,
     of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Chain: Chain2<URI> = {
+    URI,
+    map: map_,
+    ap: ap_,
+    chain: chain_,
 }
 
 /**
