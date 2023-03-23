@@ -307,6 +307,16 @@ export const chainFirst: <E, A, B>(
     )
 
 /**
+ * Less strict version of [`chainFirst`](#chainfirst)
+ *
+ * @category combinators
+ * @since 0.6.12
+ */
+export const chainFirstW: <E2, A, B>(
+    f: (a: A) => ObservableEither<E2, B>
+) => <E1>(ma: ObservableEither<E1, A>) => ObservableEither<E1, A> = chainFirst as any
+
+/**
  * @since 0.6.12
  */
 export const of: Applicative2<URI>['of'] = right

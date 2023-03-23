@@ -250,6 +250,16 @@ export const chainFirst: <R, A, B>(
     )
 
 /**
+ * Less strict version of [`chainFirst`](#chainfirst)
+ *
+ * @category combinators
+ * @since 0.6.12
+ */
+export const chainFirstW: <R2, A, B>(
+    f: (a: A) => ReaderObservable<R2, B>
+) => <R1>(ma: ReaderObservable<R1, A>) => ReaderObservable<R1 & R2, A> = chainFirst as any
+
+/**
  * Identifies an associative operation on a type constructor. It is similar to `Semigroup`, except that it applies to
  * types of kind `* -> *`.
  *

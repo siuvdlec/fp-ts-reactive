@@ -248,6 +248,16 @@ export const chainFirst: <R, E, A, B>(
     )
 
 /**
+ * Less strict version of [`chainFirst`](#chainfirst)
+ *
+ * @category combinators
+ * @since 0.6.12
+ */
+export const chainFirstW: <R2, E2, A, B>(
+    f: (a: A) => ReaderObservableEither<R2, E2, B>
+) => <R1, E1>(ma: ReaderObservableEither<E1, E1, A>) => ReaderObservableEither<R1 & R2, E1 | E2, A> = chainFirst as any
+
+/**
  * Derivable from `MonadThrow`.
  *
  * @since 0.6.10
