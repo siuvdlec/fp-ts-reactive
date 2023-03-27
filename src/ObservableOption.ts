@@ -11,7 +11,8 @@ import type { Monad1 } from 'fp-ts/Monad'
 import type { MonadIO1 } from 'fp-ts/MonadIO'
 import type { MonadTask1 } from 'fp-ts/MonadTask'
 import * as O from 'fp-ts/Option'
-import { flow, identity, Predicate, Refinement } from 'fp-ts/function'
+import * as OT from 'fp-ts/OptionT'
+import { flow, identity, Lazy, Predicate, Refinement } from 'fp-ts/function'
 import { pipe } from 'fp-ts/function'
 import type { Observable } from 'rxjs'
 import { catchError } from 'rxjs/operators'
@@ -88,6 +89,24 @@ export const tryCatch: <A>(a: Observable<A>) => ObservableOption<A> =
 // -------------------------------------------------------------------------------------
 
 /**
+ * @category pattern matching
+ * @since 0.6.12
+ */
+export const match: <B, A>(onNone: () => B, onSome: (a: A) => B) => (ma: ObservableOption<A>) => Observable<B> =
+    /*#__PURE__*/ OT.match(R.Functor)
+
+/**
+ * Less strict version of [`match`](#match).
+ *
+ * The `W` suffix (short for **W**idening) means that the handler return types will be merged.
+ *
+ * @category pattern matching
+ * @since 0.6.12
+ */
+export const matchW: <B, A, C>(onNone: () => B, onSome: (a: A) => C) => (ma: ObservableOption<A>) => Observable<B | C> =
+    match as any
+
+/**
  * @category destructors
  * @since 0.6.14
  */
@@ -100,12 +119,28 @@ export const fold: <A, B>(
 
 /**
  * @category destructors
+ * @since 0.6.12
+ */
+export const foldW: <B, C, A>(
+    onNone: () => Observable<B>,
+    onSome: (a: A) => Observable<C>
+) => (ma: ObservableOption<A>) => Observable<B | C> = fold as any
+
+/**
+ * @category destructors
  * @since 0.6.14
  */
 export const getOrElse =
     <A>(onNone: () => Observable<A>) =>
     (ma: ObservableOption<A>): Observable<A> =>
         pipe(ma, R.chain(O.fold(onNone, R.of)))
+
+/**
+ * @category destructors
+ * @since 0.6.12
+ */
+export const getOrElseW: <B>(onNone: () => Observable<B>) => <A>(ma: ObservableOption<A>) => Observable<A | B> =
+    getOrElse as any
 
 // -------------------------------------------------------------------------------------
 // combinators
@@ -120,6 +155,18 @@ export const getOrElse =
  */
 export const alt: <A>(onNone: () => ObservableOption<A>) => (ma: ObservableOption<A>) => ObservableOption<A> = f =>
     R.chain(O.fold(f, some))
+
+/**
+ * Less strict version of [`alt`](#alt).
+ *
+ * The `W` suffix (short for **W**idening) means that the return types will be merged.
+ *
+ * @category error handling
+ * @since 0.6.12
+ */
+export const altW: <B>(
+    second: Lazy<ObservableOption<B>>
+) => <A>(first: ObservableOption<A>) => ObservableOption<A | B> = alt as any
 
 // -------------------------------------------------------------------------------------
 // type class members

@@ -7,6 +7,7 @@ import type { Apply2 } from 'fp-ts/Apply'
 import type { Bifunctor2 } from 'fp-ts/Bifunctor'
 import type { Chain2 } from 'fp-ts/Chain'
 import * as E from 'fp-ts/Either'
+import * as ET from 'fp-ts/EitherT'
 import type { Functor2 } from 'fp-ts/Functor'
 import type { IO } from 'fp-ts/IO'
 import type { IOEither } from 'fp-ts/IOEither'
@@ -16,7 +17,7 @@ import type { MonadTask2 } from 'fp-ts/MonadTask'
 import type { MonadThrow2 } from 'fp-ts/MonadThrow'
 import type { Option } from 'fp-ts/Option'
 import type * as TE from 'fp-ts/TaskEither'
-import { flow, identity, Predicate, Refinement } from 'fp-ts/function'
+import { flow, identity, Lazy, Predicate, Refinement } from 'fp-ts/function'
 import { pipe } from 'fp-ts/function'
 import type { Observable } from 'rxjs'
 import { catchError } from 'rxjs/operators'
@@ -130,6 +131,24 @@ export const tryCatch: <A>(a: Observable<A>) => ObservableEither<unknown, A> =
 // -------------------------------------------------------------------------------------
 
 /**
+ * @category pattern matching
+ * @since 0.6.12
+ */
+export const match: <E, B, A>(
+    onLeft: (e: E) => B,
+    onRight: (a: A) => B
+) => (ma: ObservableEither<E, A>) => Observable<B> = /*#__PURE__*/ ET.match(R.Functor)
+
+/**
+ * @category pattern matching
+ * @since 0.6.12
+ */
+export const matchW: <E, B, A, C>(
+    onLeft: (e: E) => B,
+    onRight: (a: A) => C
+) => (ma: ObservableEither<E, A>) => Observable<B | C> = match as any
+
+/**
  * @category destructors
  * @since 0.6.8
  */
@@ -142,12 +161,29 @@ export const fold: <E, A, B>(
 
 /**
  * @category destructors
+ * @since 0.6.12
+ */
+export const foldW: <E, A, B, C>(
+    onLeft: (e: E) => Observable<B>,
+    onRight: (a: A) => Observable<C>
+) => (ma: ObservableEither<E, A>) => Observable<B | C> = fold as any
+
+/**
+ * @category destructors
  * @since 0.6.8
  */
 export const getOrElse =
     <E, A>(onLeft: (e: E) => Observable<A>) =>
     (ma: ObservableEither<E, A>): Observable<A> =>
         pipe(ma, R.chain(E.fold(onLeft, R.of)))
+
+/**
+ * @category destructors
+ * @since 0.6.12
+ */
+export const getOrElseW: <E, B>(
+    onLeft: (e: E) => Observable<B>
+) => <A>(ma: ObservableEither<E, A>) => Observable<A | B> = getOrElse as any
 
 // -------------------------------------------------------------------------------------
 // combinators
@@ -160,6 +196,14 @@ export const getOrElse =
 export const orElse: <E, A, M>(
     onLeft: (e: E) => ObservableEither<M, A>
 ) => (ma: ObservableEither<E, A>) => ObservableEither<M, A> = f => R.chain(E.fold(f, right))
+
+/**
+ * @category combinators
+ * @since 0.6.12
+ */
+export const orElseW: <E1, E2, B>(
+    onLeft: (e: E1) => ObservableEither<E2, B>
+) => <A>(ma: ObservableEither<E1, A>) => ObservableEither<E2, A | B> = orElse as any
 
 /**
  * @category combinators
@@ -196,6 +240,17 @@ export const ap = <E, A>(
         R.map(gab => (ga: E.Either<E, A>) => E.ap(ga)(gab)),
         R.ap(fa)
     )
+
+/**
+ * Less strict version of [`ap`](#ap).
+ *
+ * The `W` suffix (short for **W**idening) means that the error types will be merged.
+ *
+ * @since 0.6.12
+ */
+export const apW: <E2, A>(
+    fa: ObservableEither<E2, A>
+) => <E1, B>(fab: ObservableEither<E1, (a: A) => B>) => ObservableEither<E1 | E2, B> = ap as any
 
 /**
  * Combine two effectful actions, keeping only the result of the first.
@@ -241,6 +296,18 @@ export const alt = <E, A>(
 ): ((fa: ObservableEither<E, A>) => ObservableEither<E, A>) => R.chain(E.fold(that, right))
 
 /**
+ * Less strict version of [`alt`](#alt).
+ *
+ * The `W` suffix (short for **W**idening) means that the error and the return types will be merged.
+ *
+ * @category error handling
+ * @since 0.6.8
+ */
+export const altW: <E2, B>(
+    that: Lazy<ObservableEither<E2, B>>
+) => <E1, A>(fa: ObservableEither<E1, A>) => ObservableEither<E2, A | B> = alt as any
+
+/**
  * @category Bifunctor
  * @since 0.6.8
  */
@@ -278,14 +345,23 @@ export const chain: <A, E, B>(
 ) => (ma: ObservableEither<E, A>) => ObservableEither<E, B> = chainW
 
 /**
+ * Less strict version of [`flatten`](#flatten).
+ *
+ * The `W` suffix (short for **W**idening) means that the error types will be merged.
+ *
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const flattenW: <E1, E2, A>(mma: ObservableEither<E1, ObservableEither<E2, A>>) => ObservableEither<E1 | E2, A> =
+    /*#__PURE__*/ chainW(identity)
+
+/**
  * Derivable from `Monad`.
  *
  * @category combinators
  * @since 0.6.0
  */
-export const flatten: <E, A>(mma: ObservableEither<E, ObservableEither<E, A>>) => ObservableEither<E, A> =
-    /*#__PURE__*/
-    chain(identity)
+export const flatten: <E, A>(mma: ObservableEither<E, ObservableEither<E, A>>) => ObservableEither<E, A> = flattenW
 
 /**
  * Composes computations in sequence, using the return value of one computation to determine the next computation and
@@ -333,6 +409,20 @@ export const filterOrElse: {
     <E, A>(predicate: Predicate<A>, onFalse: (a: A) => E): (ma: ObservableEither<E, A>) => ObservableEither<E, A>
 } = <E, A>(predicate: Predicate<A>, onFalse: (a: A) => E): ((ma: ObservableEither<E, A>) => ObservableEither<E, A>) =>
     chain(a => (predicate(a) ? of(a) : throwError(onFalse(a))))
+
+/**
+ * Derivable from `MonadThrow`.
+ *
+ * @since 0.6.12
+ */
+export const filterOrElseW: {
+    <E2, E1, A, B extends A>(refinement: Refinement<A, B>, onFalse: (a: A) => E2): (
+        ma: ObservableEither<E1, A>
+    ) => ObservableEither<E1 | E2, B>
+    <E2, E1, A>(predicate: Predicate<A>, onFalse: (a: A) => E2): (
+        ma: ObservableEither<E1, A>
+    ) => ObservableEither<E1 | E2, A>
+} = filterOrElse as any
 
 /**
  * Derivable from `MonadThrow`.

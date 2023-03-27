@@ -160,6 +160,17 @@ export const ap: <R, A>(
 ) => <B>(fab: ReaderObservable<R, (a: A) => B>) => ReaderObservable<R, B> = fa => fab => r => pipe(fab(r), T.ap(fa(r)))
 
 /**
+ * Less strict version of [`ap`](#ap).
+ *
+ * The `W` suffix (short for **W**idening) means that the environment types will be merged.
+ *
+ * @since 0.6.12
+ */
+export const apW: <R2, A>(
+    fa: ReaderObservable<R2, A>
+) => <R1, B>(fab: ReaderObservable<R1, (a: A) => B>) => ReaderObservable<R1 & R2, B> = ap as any
+
+/**
  * Combine two effectful actions, keeping only the result of the first.
  *
  * Derivable from `Apply`.
@@ -221,14 +232,23 @@ export const chain: <R, A, B>(
 ) => (ma: ReaderObservable<R, A>) => ReaderObservable<R, B> = chainW
 
 /**
+ * Less strict version of [`flatten`](#flatten).
+ *
+ * The `W` suffix (short for **W**idening) means that the environment types will be merged.
+ *
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const flattenW: <R1, R2, A>(mma: ReaderObservable<R1, ReaderObservable<R2, A>>) => ReaderObservable<R1 & R2, A> =
+    /*#__PURE__*/ chainW(identity)
+
+/**
  * Derivable from `Monad`.
  *
  * @category combinators
  * @since 0.6.6
  */
-export const flatten: <R, A>(mma: ReaderObservable<R, ReaderObservable<R, A>>) => ReaderObservable<R, A> =
-    /*#__PURE__*/
-    chain(identity)
+export const flatten: <R, A>(mma: ReaderObservable<R, ReaderObservable<R, A>>) => ReaderObservable<R, A> = flattenW
 
 /**
  * Composes computations in sequence, using the return value of one computation to determine the next computation and
