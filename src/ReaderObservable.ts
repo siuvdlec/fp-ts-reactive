@@ -9,6 +9,15 @@ import type { Chain2 } from 'fp-ts/Chain'
 import type { Compactable2, Separated } from 'fp-ts/Compactable'
 import * as E from 'fp-ts/Either'
 import type { Filterable2 } from 'fp-ts/Filterable'
+import { chainFirstIOK as chainFirstIOK_, FromIO2 } from 'fp-ts/FromIO'
+import {
+    chainFirstReaderK as chainFirstReaderK_,
+    chainReaderK as chainReaderK_,
+    FromReader2,
+    fromReaderK as fromReaderK_,
+} from 'fp-ts/FromReader'
+import { chainFirstTaskK as chainFirstTaskK_, FromTask2, fromTaskK as fromTaskK_ } from 'fp-ts/FromTask'
+
 import type { Functor2 } from 'fp-ts/Functor'
 import type { IO } from 'fp-ts/IO'
 import type { Monad2 } from 'fp-ts/Monad'
@@ -18,9 +27,15 @@ import type { Monoid } from 'fp-ts/Monoid'
 import * as O from 'fp-ts/Option'
 import * as R from 'fp-ts/Reader'
 import type { ReaderTask } from 'fp-ts/ReaderTask'
+import type { Task } from 'fp-ts/Task'
 import { flow, identity, Predicate, Refinement } from 'fp-ts/function'
 import { pipe } from 'fp-ts/function'
 import type { Observable } from 'rxjs'
+import {
+    chainFirstObservableK as chainFirstObservableK_,
+    chainObservableK as chainObservableK_,
+    FromObservable2,
+} from './FromObservable'
 import type { MonadObservable2 } from './MonadObservable'
 import * as T from './Observable'
 
@@ -578,6 +593,138 @@ export const readerObservable: Monad2<URI> & Alternative2<URI> & Filterable2<URI
     fromTask,
     fromObservable,
 }
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromIO: FromIO2<URI> = {
+    URI,
+    fromIO,
+}
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstIOK: <A, B>(f: (a: A) => IO<B>) => <R>(first: ReaderObservable<R, A>) => ReaderObservable<R, A> =
+    /*#__PURE__*/ chainFirstIOK_(FromIO, Chain)
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromReader: FromReader2<URI> = {
+    URI,
+    fromReader,
+}
+
+/**
+ * @category lifting
+ * @since 0.6.12
+ */
+export const fromReaderK: <A extends ReadonlyArray<unknown>, R, B>(
+    f: (...a: A) => R.Reader<R, B>
+) => (...a: A) => ReaderObservable<R, B> = /*#__PURE__*/ fromReaderK_(FromReader)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainReaderK: <A, R, B>(
+    f: (a: A) => R.Reader<R, B>
+) => (ma: ReaderObservable<R, A>) => ReaderObservable<R, B> = /*#__PURE__*/ chainReaderK_(FromReader, Chain)
+
+/**
+ * Less strict version of [`chainReaderK`](#chainreaderk).
+ *
+ * The `W` suffix (short for **W**idening) means that the environment types will be merged.
+ *
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainReaderKW: <A, R1, B>(
+    f: (a: A) => R.Reader<R1, B>
+) => <R2>(ma: ReaderObservable<R2, A>) => ReaderObservable<R1 & R2, B> = chainReaderK as any
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstReaderK: <A, R, B>(
+    f: (a: A) => R.Reader<R, B>
+) => (ma: ReaderObservable<R, A>) => ReaderObservable<R, A> = /*#__PURE__*/ chainFirstReaderK_(FromReader, Chain)
+
+/**
+ * Less strict version of [`chainFirstReaderK`](#chainfirstreaderk).
+ *
+ * The `W` suffix (short for **W**idening) means that the environment types will be merged.
+ *
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstReaderKW: <A, R1, B>(
+    f: (a: A) => R.Reader<R1, B>
+) => <R2>(ma: ReaderObservable<R2, A>) => ReaderObservable<R1 & R2, A> = chainFirstReaderK as any
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromTask: FromTask2<URI> = {
+    URI,
+    fromIO,
+    fromTask,
+}
+
+/**
+ * @category lifting
+ * @since 0.6.12
+ */
+export const fromTaskK: <A extends ReadonlyArray<unknown>, B>(
+    f: (...a: A) => Task<B>
+) => <R = unknown>(...a: A) => ReaderObservable<R, B> = /*#__PURE__*/ fromTaskK_(FromTask)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstTaskK: <A, B>(
+    f: (a: A) => Task<B>
+) => <R>(first: ReaderObservable<R, A>) => ReaderObservable<R, A> = /*#__PURE__*/ chainFirstTaskK_(FromTask, Chain)
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromObservable: FromObservable2<URI> = {
+    URI,
+    fromIO,
+    fromTask,
+    fromObservable,
+}
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainObservableK: <A, B>(
+    f: (a: A) => Observable<B>
+) => <R>(first: ReaderObservable<R, A>) => ReaderObservable<R, B> = /*#__PURE__*/ chainObservableK_(
+    FromObservable,
+    Chain
+)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstObservableK: <A, B>(
+    f: (a: A) => Observable<B>
+) => <R>(first: ReaderObservable<R, A>) => ReaderObservable<R, A> = /*#__PURE__*/ chainFirstObservableK_(
+    FromObservable,
+    Chain
+)
 
 // -------------------------------------------------------------------------------------
 // utils

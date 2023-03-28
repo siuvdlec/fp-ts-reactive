@@ -8,6 +8,20 @@ import type { Bifunctor2 } from 'fp-ts/Bifunctor'
 import type { Chain2 } from 'fp-ts/Chain'
 import * as E from 'fp-ts/Either'
 import * as ET from 'fp-ts/EitherT'
+import {
+    chainEitherK as chainEitherK_,
+    chainOptionK as chainOptionK_,
+    FromEither2,
+    fromEitherK as fromEitherK_,
+    fromOptionK as fromOptionK_,
+} from 'fp-ts/FromEither'
+import { chainFirstIOK as chainFirstIOK_, chainIOK as chainIOK_, FromIO2, fromIOK as fromIOK_ } from 'fp-ts/FromIO'
+import {
+    chainFirstTaskK as chainFirstTaskK_,
+    chainTaskK as chainTaskK_,
+    FromTask2,
+    fromTaskK as fromTaskK_,
+} from 'fp-ts/FromTask'
 import type { Functor2 } from 'fp-ts/Functor'
 import type { IO } from 'fp-ts/IO'
 import type { IOEither } from 'fp-ts/IOEither'
@@ -16,11 +30,18 @@ import type { MonadIO2 } from 'fp-ts/MonadIO'
 import type { MonadTask2 } from 'fp-ts/MonadTask'
 import type { MonadThrow2 } from 'fp-ts/MonadThrow'
 import type { Option } from 'fp-ts/Option'
+import type * as T from 'fp-ts/Task'
 import type * as TE from 'fp-ts/TaskEither'
 import { flow, identity, Lazy, Predicate, Refinement } from 'fp-ts/function'
 import { pipe } from 'fp-ts/function'
 import type { Observable } from 'rxjs'
 import { catchError } from 'rxjs/operators'
+import {
+    chainFirstObservableK as chainFirstObservableK_,
+    chainObservableK as chainObservableK_,
+    FromObservable2,
+    fromObservableK as fromObservableK_,
+} from './FromObservable'
 import type { MonadObservable2 } from './MonadObservable'
 import * as R from './Observable'
 
@@ -390,7 +411,7 @@ export const chainFirst: <E, A, B>(
  */
 export const chainFirstW: <E2, A, B>(
     f: (a: A) => ObservableEither<E2, B>
-) => <E1>(ma: ObservableEither<E1, A>) => ObservableEither<E1, A> = chainFirst as any
+) => <E1>(ma: ObservableEither<E1, A>) => ObservableEither<E1 | E2, A> = chainFirst as any
 
 /**
  * @since 0.6.12
@@ -643,6 +664,183 @@ export const observableEither: Monad2<URI> & Bifunctor2<URI> & Alt2<URI> & Monad
     fromObservable,
     throwError,
 }
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromEither: FromEither2<URI> = {
+    URI,
+    fromEither,
+}
+
+/**
+ * @category lifting
+ * @since 0.6.12
+ */
+export const fromEitherK: <E, A extends ReadonlyArray<unknown>, B>(
+    f: (...a: A) => E.Either<E, B>
+) => (...a: A) => ObservableEither<E, B> = /*#__PURE__*/ fromEitherK_(FromEither)
+
+/**
+ * @category lifting
+ * @since 0.6.12
+ */
+export const fromOptionK: <E>(
+    onNone: Lazy<E>
+) => <A extends ReadonlyArray<unknown>, B>(f: (...a: A) => Option<B>) => (...a: A) => ObservableEither<E, B> =
+    /*#__PURE__*/ fromOptionK_(FromEither)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainOptionK: <E>(
+    onNone: Lazy<E>
+) => <A, B>(f: (a: A) => Option<B>) => (ma: ObservableEither<E, A>) => ObservableEither<E, B> =
+    /*#__PURE__*/ chainOptionK_(FromEither, Chain)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainEitherK: <E, A, B>(
+    f: (a: A) => E.Either<E, B>
+) => (ma: ObservableEither<E, A>) => ObservableEither<E, B> = /*#__PURE__*/ chainEitherK_(FromEither, Chain)
+
+/**
+ * Less strict version of [`chainEitherK`](#chaineitherk).
+ *
+ * The `W` suffix (short for **W**idening) means that the error types will be merged.
+ *
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainEitherKW: <E2, A, B>(
+    f: (a: A) => E.Either<E2, B>
+) => <E1>(ma: ObservableEither<E1, A>) => ObservableEither<E1 | E2, B> = chainEitherK as any
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstEitherK: <E, A, B>(
+    f: (a: A) => E.Either<E, B>
+) => (ma: ObservableEither<E, A>) => ObservableEither<E, A> = flow(fromEitherK, chainFirst)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstEitherKW: <E2, A, B>(
+    f: (a: A) => E.Either<E2, B>
+) => <E1>(ma: ObservableEither<E1, A>) => ObservableEither<E1 | E2, A> = chainFirstEitherK as any
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromTask: FromTask2<URI> = {
+    URI,
+    fromIO,
+    fromTask,
+}
+
+/**
+ * @category lifting
+ * @since 0.6.12
+ */
+export const fromTaskK: <A extends ReadonlyArray<unknown>, B>(
+    f: (...a: A) => T.Task<B>
+) => <E = never>(...a: A) => ObservableEither<E, B> = /*#__PURE__*/ fromTaskK_(FromTask)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainTaskK: <A, B>(
+    f: (a: A) => T.Task<B>
+) => <E>(first: ObservableEither<E, A>) => ObservableEither<E, B> = /*#__PURE__*/ chainTaskK_(FromTask, Chain)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstTaskK: <A, B>(
+    f: (a: A) => T.Task<B>
+) => <E>(first: ObservableEither<E, A>) => ObservableEither<E, A> = /*#__PURE__*/ chainFirstTaskK_(FromTask, Chain)
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromIO: FromIO2<URI> = {
+    URI,
+    fromIO,
+}
+
+/**
+ * @category lifting
+ * @since 0.6.12
+ */
+export const fromIOK: <A extends ReadonlyArray<unknown>, B>(
+    f: (...a: A) => IO<B>
+) => <E = never>(...a: A) => ObservableEither<E, B> = /*#__PURE__*/ fromIOK_(FromIO)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainIOK: <A, B>(f: (a: A) => IO<B>) => <E>(first: ObservableEither<E, A>) => ObservableEither<E, B> =
+    /*#__PURE__*/ chainIOK_(FromIO, Chain)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstIOK: <A, B>(f: (a: A) => IO<B>) => <E>(first: ObservableEither<E, A>) => ObservableEither<E, A> =
+    /*#__PURE__*/ chainFirstIOK_(FromIO, Chain)
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromObservable: FromObservable2<URI> = {
+    URI,
+    fromIO,
+    fromTask,
+    fromObservable,
+}
+
+/**
+ * @category lifting
+ * @since 0.6.12
+ */
+export const fromObservableK: <A extends ReadonlyArray<unknown>, B>(
+    f: (...a: A) => Observable<B>
+) => <E = never>(...a: A) => ObservableEither<E, B> = /*#__PURE__*/ fromObservableK_(FromObservable)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainObservableK: <A, B>(
+    f: (a: A) => Observable<B>
+) => <E>(first: ObservableEither<E, A>) => ObservableEither<E, B> = /*#__PURE__*/ chainObservableK_(
+    FromObservable,
+    Chain
+)
+
+/**
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const chainFirstObservableK: <A, B>(
+    f: (a: A) => Observable<B>
+) => <E>(first: ObservableEither<E, A>) => ObservableEither<E, A> = /*#__PURE__*/ chainFirstObservableK_(
+    FromObservable,
+    Chain
+)
 
 // -------------------------------------------------------------------------------------
 // utils

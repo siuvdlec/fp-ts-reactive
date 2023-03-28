@@ -15,11 +15,13 @@ import type { MonadIO1 } from 'fp-ts/MonadIO'
 import type { MonadTask1 } from 'fp-ts/MonadTask'
 import type { Monoid } from 'fp-ts/Monoid'
 import * as O from 'fp-ts/Option'
+import type { Pointed1 } from 'fp-ts/Pointed'
 import type { Task } from 'fp-ts/Task'
 import { flow, identity, Predicate, Refinement } from 'fp-ts/function'
 import { pipe } from 'fp-ts/function'
 import { combineLatest, defer, EMPTY, lastValueFrom, merge, Observable, of as rxOf } from 'rxjs'
 import { map as rxMap, mergeMap } from 'rxjs/operators'
+import type { FromObservable1 } from './FromObservable'
 import type { MonadObservable1 } from './MonadObservable'
 
 // -------------------------------------------------------------------------------------
@@ -273,6 +275,26 @@ export const getMonoid = <A = never>(): Monoid<Observable<A>> => ({
     concat: (x, y) => merge(x, y),
     empty: EMPTY,
 })
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Pointed: Pointed1<URI> = {
+    URI,
+    of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromObservable: FromObservable1<URI> = {
+    URI,
+    fromIO,
+    fromTask,
+    fromObservable: identity,
+}
 
 /**
  * @category instances
