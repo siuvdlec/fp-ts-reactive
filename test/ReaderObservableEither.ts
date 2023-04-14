@@ -1,14 +1,19 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import * as E from 'fp-ts/Either'
 import * as IO from 'fp-ts/IO'
 import * as O from 'fp-ts/Option'
 import * as R from 'fp-ts/Reader'
+import * as RE from 'fp-ts/ReaderEither'
 import * as T from 'fp-ts/Task'
+import * as TE from 'fp-ts/TaskEither'
 import { flow } from 'fp-ts/function'
 import { pipe } from 'fp-ts/function'
 import { lastValueFrom } from 'rxjs'
 import { bufferTime } from 'rxjs/operators'
 import * as assert from 'assert'
 import { observable as OB, observableEither as OBE, readerObservableEither as _ } from '../src'
+import * as OO from '../src/Observable'
+import * as OE from '../src/ObservableEither'
 
 // test helper to dry up LOC.
 export const buffer = flow(R.map(bufferTime(10)), R.map(OB.toTask))
@@ -119,6 +124,11 @@ describe('ReaderObservable', () => {
         assert.deepStrictEqual(x, [E.right(1)])
     })
 
+    it('fromReaderEither', async () => {
+        assert.deepStrictEqual(await pipe(_.fromReaderEither(RE.left('a')), buffer)({})(), [E.left('a')])
+        assert.deepStrictEqual(await pipe(_.fromReaderEither(RE.right(1)), buffer)({})(), [E.right(1)])
+    })
+
     it('fromIO', async () => {
         const robe = pipe(_.fromIO(IO.of(1)), buffer)
         const x = await robe({})()
@@ -129,6 +139,70 @@ describe('ReaderObservable', () => {
         const robe = pipe(_.fromObservable(OB.of(1)), buffer)
         const x = await robe({})()
         assert.deepStrictEqual(x, [E.right(1)])
+    })
+
+    it('rightReader', async () => {
+        assert.deepStrictEqual(await pipe(_.rightReader(R.of('a')), buffer)({})(), [E.right('a')])
+    })
+
+    it('leftReader', async () => {
+        assert.deepStrictEqual(await pipe(_.leftReader(R.of('a')), buffer)({})(), [E.left('a')])
+    })
+
+    it('chainObservableEitherK', async () => {
+        const f = (s: string) => OE.right(s.length)
+        assert.deepStrictEqual(await pipe(_.right('a'), _.chainObservableEitherK(f), buffer)({})(), [E.right(1)])
+    })
+
+    it('chainFirstObservableEitherKW', async () => {
+        const f = (s: string) => OE.right<string, number>(s.length)
+        assert.deepStrictEqual(
+            await pipe(_.right<{}, number, string>('a'), _.chainFirstObservableEitherKW(f), buffer)({})(),
+            [E.right('a')]
+        )
+    })
+
+    it('chainTaskEitherK', async () => {
+        const f = (s: string) => TE.right(s.length)
+        assert.deepStrictEqual(await pipe(_.right('a'), _.chainTaskEitherK(f), buffer)({})(), [E.right(1)])
+    })
+
+    it('chainFirstTaskEitherKW', async () => {
+        const f = (s: string) => TE.right<string, number>(s.length)
+        assert.deepStrictEqual(
+            await pipe(_.right<{}, number, string>('a'), _.chainFirstTaskEitherKW(f), buffer)({})(),
+            [E.right('a')]
+        )
+    })
+
+    it('chainReaderEitherK', async () => {
+        const f = (s: string) => RE.right(s.length)
+        assert.deepStrictEqual(await pipe(_.right('a'), _.chainReaderEitherK(f), buffer)({})(), [E.right(1)])
+    })
+
+    it('chainFirstReaderEitherKW', async () => {
+        const f = (s: string) => RE.right(s.length)
+        assert.deepStrictEqual(
+            await pipe(_.right<{}, never, string>('a'), _.chainFirstReaderEitherKW(f), buffer)({})(),
+            [E.right('a')]
+        )
+    })
+
+    it('fromObservableK', async () => {
+        const f = (s: string) => OO.of(s.length)
+        assert.deepStrictEqual(await pipe(_.fromObservableK(f)('a'), buffer)({})(), [E.right(1)])
+    })
+
+    it('chainObservableK', async () => {
+        const f = (s: string) => OO.of(s.length)
+        assert.deepStrictEqual(await pipe(_.right('a'), _.chainObservableK(f), buffer)({})(), [E.right(1)])
+    })
+
+    it('chainFirstObservableK', async () => {
+        const f = (s: string) => OO.of(s.length)
+        assert.deepStrictEqual(await pipe(_.right<{}, never, string>('a'), _.chainFirstObservableK(f), buffer)({})(), [
+            E.right('a'),
+        ])
     })
 
     // robe should expose right

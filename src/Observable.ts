@@ -5,6 +5,7 @@ import type { Alt1 } from 'fp-ts/Alt'
 import type { Alternative1 } from 'fp-ts/Alternative'
 import type { Applicative1 } from 'fp-ts/Applicative'
 import type { Apply1 } from 'fp-ts/Apply'
+import type { Chain1 } from 'fp-ts/Chain'
 import type { Compactable1, Separated } from 'fp-ts/Compactable'
 import * as E from 'fp-ts/Either'
 import type { Filterable1 } from 'fp-ts/Filterable'
@@ -14,11 +15,13 @@ import type { MonadIO1 } from 'fp-ts/MonadIO'
 import type { MonadTask1 } from 'fp-ts/MonadTask'
 import type { Monoid } from 'fp-ts/Monoid'
 import * as O from 'fp-ts/Option'
+import type { Pointed1 } from 'fp-ts/Pointed'
 import type { Task } from 'fp-ts/Task'
 import { flow, identity, Predicate, Refinement } from 'fp-ts/function'
 import { pipe } from 'fp-ts/function'
 import { combineLatest, defer, EMPTY, lastValueFrom, merge, Observable, of as rxOf } from 'rxjs'
 import { map as rxMap, mergeMap } from 'rxjs/operators'
+import type { FromObservable1 } from './FromObservable'
 import type { MonadObservable1 } from './MonadObservable'
 
 // -------------------------------------------------------------------------------------
@@ -277,6 +280,26 @@ export const getMonoid = <A = never>(): Monoid<Observable<A>> => ({
  * @category instances
  * @since 0.6.12
  */
+export const Pointed: Pointed1<URI> = {
+    URI,
+    of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const FromObservable: FromObservable1<URI> = {
+    URI,
+    fromIO,
+    fromTask,
+    fromObservable: identity,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
 export const Functor: Functor1<URI> = {
     URI,
     map: map_,
@@ -301,6 +324,17 @@ export const Applicative: Applicative1<URI> = {
     map: map_,
     ap: ap_,
     of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Chain: Chain1<URI> = {
+    URI,
+    map: map_,
+    ap: ap_,
+    chain: chain_,
 }
 
 /**

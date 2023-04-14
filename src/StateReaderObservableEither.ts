@@ -4,6 +4,7 @@
 import type { Applicative4 } from 'fp-ts/Applicative'
 import type { Apply4 } from 'fp-ts/Apply'
 import type { Bifunctor4 } from 'fp-ts/Bifunctor'
+import type { Chain4 } from 'fp-ts/Chain'
 import * as E from 'fp-ts/Either'
 import type { Functor4 } from 'fp-ts/Functor'
 import type { Monad4 } from 'fp-ts/Monad'
@@ -160,6 +161,19 @@ export const ap: <S, R, E, A>(
         )
 
 /**
+ * Less strict version of [`ap`](#ap).
+ *
+ * The `W` suffix (short for **W**idening) means that the environment types and the error types will be merged.
+ *
+ * @since 0.6.12
+ */
+export const apW: <S, R2, E2, A>(
+    fa: StateReaderObservableEither<S, R2, E2, A>
+) => <R1, E1, B>(
+    fab: StateReaderObservableEither<S, R1, E1, (a: A) => B>
+) => StateReaderObservableEither<S, R1 & R2, E1 | E2, B> = ap as any
+
+/**
  * Combine two effectful actions, keeping only the result of the first.
  *
  * Derivable from `Apply`.
@@ -234,6 +248,18 @@ export const chain: <S, R, E, A, B>(
 ) => (ma: StateReaderObservableEither<S, R, E, A>) => StateReaderObservableEither<S, R, E, B> = chainW
 
 /**
+ * Less strict version of [`flatten`](#flatten).
+ *
+ * The `W` suffix (short for **W**idening) means that the environment types and the error types will be merged.
+ *
+ * @category sequencing
+ * @since 0.6.12
+ */
+export const flattenW: <S, R1, E1, R2, E2, A>(
+    mma: StateReaderObservableEither<S, R1, E1, StateReaderObservableEither<S, R2, E2, A>>
+) => StateReaderObservableEither<S, R1 & R2, E1 | E2, A> = /*#__PURE__*/ chainW(identity)
+
+/**
  * Derivable from `Monad`.
  *
  * @category combinators
@@ -241,9 +267,7 @@ export const chain: <S, R, E, A, B>(
  */
 export const flatten: <S, R, E, A>(
     mma: StateReaderObservableEither<S, R, E, StateReaderObservableEither<S, R, E, A>>
-) => StateReaderObservableEither<S, R, E, A> =
-    /*#__PURE__*/
-    chain(identity)
+) => StateReaderObservableEither<S, R, E, A> = flattenW
 
 /**
  * Composes computations in sequence, using the return value of one computation to determine the next computation and
@@ -265,6 +289,17 @@ export const chainFirst: <S, R, E, A, B>(
     )
 
 /**
+ * Less strict version of [`chainFirst`](#chainfirst)
+ *
+ * @category combinators
+ * @since 0.6.12
+ */
+export const chainFirstW: <S, R2, E2, A, B>(
+    f: (a: A) => StateReaderObservableEither<S, R2, E2, B>
+) => <R1, E1>(ma: StateReaderObservableEither<S, R1, E1, A>) => StateReaderObservableEither<S, R1 & R2, E1 | E2, A> =
+    chainFirst as any
+
+/**
  * Derivable from `MonadThrow`.
  *
  * @since 0.6.10
@@ -281,6 +316,26 @@ export const filterOrElse: {
     onFalse: (a: A) => E
 ): (<S, R>(ma: StateReaderObservableEither<S, R, E, A>) => StateReaderObservableEither<S, R, E, A>) =>
     chain(a => (predicate(a) ? of(a) : throwError(onFalse(a))))
+
+/**
+ * Less strict version of [`filterOrElse`](#filterorelse).
+ *
+ * The `W` suffix (short for **W**idening) means that the error types will be merged.
+ *
+ * @category filtering
+ * @since 0.6.12
+ */
+export const filterOrElseW: {
+    <A, B extends A, E2>(refinement: Refinement<A, B>, onFalse: (a: A) => E2): <S, R, E1>(
+        ma: StateReaderObservableEither<S, R, E1, A>
+    ) => StateReaderObservableEither<S, R, E1 | E2, B>
+    <A, E2>(predicate: Predicate<A>, onFalse: (a: A) => E2): <S, R, E1, B extends A>(
+        mb: StateReaderObservableEither<S, R, E1, B>
+    ) => StateReaderObservableEither<S, R, E1 | E2, B>
+    <A, E2>(predicate: Predicate<A>, onFalse: (a: A) => E2): <S, R, E1>(
+        ma: StateReaderObservableEither<S, R, E1, A>
+    ) => StateReaderObservableEither<S, R, E1 | E2, A>
+} = filterOrElse
 
 /**
  * Derivable from `MonadThrow`.
@@ -370,6 +425,17 @@ export const Applicative: Applicative4<URI> = {
     map: map_,
     ap: ap_,
     of,
+}
+
+/**
+ * @category instances
+ * @since 0.6.12
+ */
+export const Chain: Chain4<URI> = {
+    URI,
+    map: map_,
+    ap: ap_,
+    chain: chain_,
 }
 
 /**
